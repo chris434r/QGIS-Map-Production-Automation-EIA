@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/EIA_Map_Production_Automation" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
