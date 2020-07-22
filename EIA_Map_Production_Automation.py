@@ -221,7 +221,7 @@ class EIA_Map_Production_Automation:
                 projectfolder = self.dlg.Proj_Folder.text()
 
                 projectGISFolder = projectfolder + "\\" + "ATZ Automation GIS"
-                folders = ["1. Site Location Shapefile", "2. Isochrone Shapefiles", "3. Clipped Outputs",
+                folders = ["1. Site Location Shapefile", "2.Project Buffers", "3. Clipped Outputs",
                            "4. QGIS Map Docs", "5. Map Outputs"]
             try:
                 path = projectGISFolder
@@ -235,13 +235,13 @@ class EIA_Map_Production_Automation:
             except:
                 print("error")
 
-            # 2. creating sub sub folders in input project directory
+            # 2. creating buffer distance folders within main buffer folder
 
             if result:
-                Isochrone_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
-                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
-                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "10 Min Cycle"
-                CYCLE_10 = ["10 Min Cycle"]
+                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
+                Buffer_Sub_Folder_make = Buffers_Sub_Folder
+                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 500m"
+                Buffer_500 = ["Site Buffer - 500m "]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
@@ -249,35 +249,26 @@ class EIA_Map_Production_Automation:
                 print("error")
 
             if result:
-                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
-
-                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "20 Min Cycle"
-                CYCLE_20 = ["20 Min Cycle"]
+                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
+                Buffer_Sub_Folder_make = Buffers_Sub_Folder
+                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 600m"
+                Buffer_600 = ["Site Buffer - 600m "]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
             except:
                 print("error")
             if result:
-                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
-
-                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "10 Min Walk"
-                WALK_10 = ["10 Min Walk"]
+                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
+                Buffer_Sub_Folder_make = Buffers_Sub_Folder
+                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 1km"
+                Buffer_1000 = ["Site Buffer - 1km "]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
             except:
                 print("error")
-            if result:
-                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
 
-                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "Service Areas"
-                Service_Area = ["Service Areas"]
-            try:
-                path = Sub_Folder
-                os.makedirs(path, 493)
-            except:
-                print("error")
 
             # ----------------Clipped folder---------------------------------------------------------
 
