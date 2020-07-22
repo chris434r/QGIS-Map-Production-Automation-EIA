@@ -25,6 +25,22 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+#old imports needs tidy
+
+import sys
+import os
+import processing
+import time
+import shutil
+
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from qgis.gui import *
+from qgis.utils import iface
+from PyQt5.QtWidgets import *
+from qgis.core import *
+
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
@@ -198,3 +214,903 @@ class EIA_Map_Production_Automation:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass
+
+            # 1.creating sub folders in input project directory
+
+            if result:
+                projectfolder = self.dlg.Proj_Folder.text()
+
+                projectGISFolder = projectfolder + "\\" + "ATZ Automation GIS"
+                folders = ["1. Site Location Shapefile", "2. Isochrone Shapefiles", "3. Clipped Outputs",
+                           "4. QGIS Map Docs", "5. Map Outputs"]
+            try:
+                path = projectGISFolder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+            try:
+                for folder in folders:
+                    path = projectGISFolder + "\\" + folder
+                    os.makedirs(path, 493)
+            except:
+                print("error")
+
+            # 2. creating sub sub folders in input project directory
+
+            if result:
+                Isochrone_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
+                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
+                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "10 Min Cycle"
+                CYCLE_10 = ["10 Min Cycle"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+
+            if result:
+                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
+
+                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "20 Min Cycle"
+                CYCLE_20 = ["20 Min Cycle"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+            if result:
+                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
+
+                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "10 Min Walk"
+                WALK_10 = ["10 Min Walk"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+            if result:
+                Isochrone_Sub_Folder_make = Isochrone_Sub_Folder
+
+                Sub_Folder = Isochrone_Sub_Folder_make + "\\" + "Service Areas"
+                Service_Area = ["Service Areas"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+
+            # ----------------Clipped folder---------------------------------------------------------
+
+            if result:
+                Clipped_Sub_Folder = projectGISFolder + "\\" + folders[2] + "\\"
+                Clipped_Sub_Folder_make = Clipped_Sub_Folder
+                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 2 Clipped Layers"
+                CLIP_CYCLE_10 = ["Map 2 Clipped Layers"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+
+            if result:
+                Clipped_Sub_Folder_make = Clipped_Sub_Folder
+
+                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 1 Clipped Layers"
+                CLIP_CYCLE_20 = ["Map 1 Clipped Layers"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+            if result:
+                Clipped_Sub_Folder_make = Clipped_Sub_Folder
+
+                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 3 Clipped Layers"
+                CLIP_WALK_10 = ["Map 3 Clipped Layers"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+
+            # 2.creating point layer from user input
+
+            Site_loc = projectGISFolder + "\\" + folders[0] + "\\"
+            Site = Site_loc + "Site.shp"
+            layerFields = QgsFields()
+            layerFields.append(QgsField('id', QVariant.Int))
+            layerFields.append(QgsField('value', QVariant.Double))
+            layerFields.append(QgsField('name', QVariant.String))
+
+            writer = QgsVectorFileWriter(Site, 'UTF-8', layerFields, QgsWkbTypes.Point, \
+                                         QgsCoordinateReferenceSystem('EPSG:4326'), 'ESRI Shapefile')
+
+            feat = QgsFeature()
+            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(self.dlg.LONG.value(), self.dlg.LAT.value())))
+            # feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(0.05274, 51.52195)))
+            feat.setAttributes([1, 1.1, 'name'])
+            writer.addFeature(feat)
+            del writer
+
+            # 3:reprojecting user input point to BNG
+
+            # 3a.creating sub folder for projected shapefile
+
+            if result:
+                BNG_Sub_Folder_make = Site_loc
+                Sub_Folder = BNG_Sub_Folder_make + "\\" + "BNG"
+                BNGFOLDER = ["BNG"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+
+            # 3b.running reproject processing
+
+            BNG_Convert = BNG_Sub_Folder_make + BNGFOLDER[0] + "\\" + "Site Location.shp"
+            processing.run("native:reprojectlayer",
+                           {'INPUT': Site,
+                            'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:27700'),
+                            'OUTPUT': BNG_Convert})
+            # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+            # creating service areas from Site Location point in BNG
+            # directory setting:
+
+            BNG_Converted_Point_Folder = Site_loc + "\\" + BNGFOLDER[0] + "\\"
+            Road_Network = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Roads\NAVTEQ_2019'
+            Start_Point = BNG_Converted_Point_Folder + "Site Location.shp"
+
+            Service_Area_Sub_Folder = Isochrone_Sub_Folder + "\\" + Service_Area[0] + "\\"
+            Ten_Minute_Walk_Sub_Folder = Isochrone_Sub_Folder + "\\" + WALK_10[0] + "\\"
+            Ten_Minute_Cycle_Sub_Folder = Isochrone_Sub_Folder + "\\" + CYCLE_10[0] + "\\"
+            Twenty_Minute_Cycle_Sub_Folder = Isochrone_Sub_Folder + "\\" + CYCLE_20[0] + "\\"
+
+            SA_CYCLE_10 = Service_Area_Sub_Folder + "Cycle_Service_Area_10_Min.shp"
+            SA_CYCLE_20 = Service_Area_Sub_Folder + "Cycle_Service_Area_20_Min.shp"
+            SA_WALK_10 = Service_Area_Sub_Folder + "Walking_Service_Area_10_Min.shp"
+
+            CH_WALK_10 = Ten_Minute_Walk_Sub_Folder + "Approximate 10 minute walk time from site.shp"
+            CH_CYCLE_10 = Ten_Minute_Cycle_Sub_Folder + "Approximate 10 minute cycle time from site.shp"
+            CH_CYCLE_20 = Twenty_Minute_Cycle_Sub_Folder + "Approximate 20 minute cycle time from site.shp"
+
+            # creating walking service area 10 min----------------------------------------------------------------------------------------------------------------------------------------------------
+
+            processing.run("qgis:serviceareafromlayer",
+                           {'INPUT': Road_Network,
+                            'START_POINTS': Start_Point,
+                            'STRATEGY': 0,
+                            'TRAVEL_COST': 800,
+                            'DIRECTION_FIELD': None,
+                            'VALUE_FORWARD': '',
+                            'VALUE_BACKWARD': '',
+                            'VALUE_BOTH': '',
+                            'DEFAULT_DIRECTION': 2,
+                            'SPEED_FIELD': None,
+                            'DEFAULT_SPEED': 5,
+                            'TOLERANCE': 0,
+                            'INCLUDE_BOUNDS': False,
+                            'OUTPUT_LINES': SA_WALK_10})
+            processing.run("native:convexhull",
+                           {'INPUT': SA_WALK_10,
+                            'OUTPUT': CH_WALK_10})
+
+            # creating cycle service area 10 mins-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+            processing.run("qgis:serviceareafromlayer",
+                           {'INPUT': Road_Network,
+                            'START_POINTS': Start_Point,
+                            'STRATEGY': 0,
+                            'TRAVEL_COST': 2600,
+                            'DIRECTION_FIELD': None,
+                            'VALUE_FORWARD': '',
+                            'VALUE_BACKWARD': '',
+                            'VALUE_BOTH': '',
+                            'DEFAULT_DIRECTION': 2,
+                            'SPEED_FIELD': None,
+                            'DEFAULT_SPEED': 16,
+                            'TOLERANCE': 0,
+                            'INCLUDE_BOUNDS': False,
+                            'OUTPUT_LINES': SA_CYCLE_10})
+            processing.run("native:convexhull", \
+                           {'INPUT': SA_CYCLE_10,
+                            'OUTPUT': CH_CYCLE_10})
+
+            # creating cycle service area-------20 mins -----------------------
+
+            processing.run("qgis:serviceareafromlayer", \
+                           {'INPUT': Road_Network, \
+                            'START_POINTS': Start_Point, \
+                            'STRATEGY': 0, \
+                            'TRAVEL_COST': 5330, \
+                            'DIRECTION_FIELD': None,
+                            'VALUE_FORWARD': '', \
+                            'VALUE_BACKWARD': '', \
+                            'VALUE_BOTH': '', \
+                            'DEFAULT_DIRECTION': 2, \
+                            'SPEED_FIELD': None, \
+                            'DEFAULT_SPEED': 16, \
+                            'TOLERANCE': 0, \
+                            'INCLUDE_BOUNDS': False, \
+                            'OUTPUT_LINES': SA_CYCLE_20})
+            processing.run("native:convexhull", \
+                           {'INPUT': SA_CYCLE_20,
+                            'OUTPUT': CH_CYCLE_20})
+
+            # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            # Clipping Layers to simple service area outputs
+
+            Map1_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 1' + "\\"
+            Map2_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 2' + "\\"
+            Map3_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 3' + "\\"
+
+            Cycle_10_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
+            Cycle_20_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_20[0] + "\\"
+            Walk_10_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_WALK_10[0] + "\\"
+
+            # 20 Minute Cycle clip for Map 1 layers:
+            map1list = []
+            for item in os.listdir(Map1_Data):
+                if item[-3:] == 'shp':
+                    map1list.append(item)
+
+            for layer in map1list:
+                processing.run("native:clip",
+                               {'INPUT': Map1_Data + layer,
+                                'OVERLAY': CH_CYCLE_20,
+                                'OUTPUT': Cycle_20_service_area_clip_output + layer})
+
+            # 10 Minute Cycle clip for Map 2 layers:
+
+            map2list = []
+
+            for item in os.listdir(Map2_Data):
+                if item[-3:] == 'shp':
+                    map2list.append(item)
+            for layer in map2list:
+                processing.run("native:clip",
+                               {'INPUT': Map2_Data + "\\" + layer,
+                                'OVERLAY': CH_CYCLE_10,
+                                'OUTPUT': Cycle_10_service_area_clip_output + layer})
+
+            # 10 Minute Walk Clip for Map 3 layers:
+
+            map3list = []
+            for item in os.listdir(Map3_Data):
+                if item[-3:] == 'shp':
+                    map3list.append(item)
+
+            for layer in map3list:
+                processing.run("native:clip",
+                               {'INPUT': Map3_Data + "\\" + layer,
+                                'OVERLAY': CH_WALK_10,
+                                'OUTPUT': Walk_10_service_area_clip_output + layer})
+
+            # importing symbology into output shapefile folders:
+            main_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Main'
+            main_symbols_list = []
+            for symbols in os.listdir(main_symbol_folder):
+                if symbols[-3:] == 'qml':
+                    main_symbols_list.append(main_symbol_folder + "\\" + symbols)
+            for ms in main_symbols_list:
+                shutil.copy(ms, Walk_10_service_area_clip_output),
+                shutil.copy(ms, Cycle_10_service_area_clip_output),
+                shutil.copy(ms, Cycle_20_service_area_clip_output),
+
+            Walk10_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Isochrone\10 Min Walk'
+            Cycle10_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Isochrone\10 Min Cycle'
+            Cycle20_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Isochrone\20 Min Cycle'
+            Site_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Site'
+            site_symbols_list = []
+            walk10_symbols_list = []
+            cycle10_symbols_list = []
+            cycle20_symbols_list = []
+
+            for w10 in os.listdir(Walk10_symbol_folder):
+                if w10[-3:] == 'qml':
+                    walk10_symbols_list.append(Walk10_symbol_folder + "\\" + w10)
+                for w10symbol in walk10_symbols_list:
+                    shutil.copy(w10symbol, Ten_Minute_Walk_Sub_Folder),
+
+            for c10 in os.listdir(Cycle10_symbol_folder):
+                if c10[-3:] == 'qml':
+                    cycle10_symbols_list.append(Cycle10_symbol_folder + "\\" + c10)
+                for c10symbol in cycle10_symbols_list:
+                    shutil.copy(c10symbol, Ten_Minute_Cycle_Sub_Folder),
+
+            for c20 in os.listdir(Cycle20_symbol_folder):
+                if c20[-3:] == 'qml':
+                    cycle20_symbols_list.append(Cycle20_symbol_folder + "\\" + c20)
+                for c20symbol in cycle20_symbols_list:
+                    shutil.copy(c20symbol, Twenty_Minute_Cycle_Sub_Folder),
+
+            for s in os.listdir(Site_symbol_folder):
+                if s[-3:] == 'qml':
+                    site_symbols_list.append(Site_symbol_folder + "\\" + s)
+                for s_symbol in site_symbols_list:
+                    shutil.copy(s_symbol, BNG_Converted_Point_Folder),
+
+            # ---Map names ----------------------------------------------------------
+            Map1name = "Map 1 - Active Travel Zone.qgs"
+            Map2name = "Map 2 - Neighbourhood & Most Important Journey.qgs"
+            Map3name = "Map 3 - Neighbourhood Safety.qgs"
+
+            # ----------Creating Map 1----------------------------------------------------------------------------------------
+
+            Mapout = projectGISFolder + "\\" + folders[3] + "\\"
+            project1 = QgsProject.instance()
+            project1.setCrs(QgsCoordinateReferenceSystem(3857))
+            project1.setFileName(Mapout + Map1name)
+
+            MapSite = BNG_Sub_Folder_make + BNGFOLDER[0] + "\\" + "Site Location.shp"
+            Map1Layers = projectGISFolder + "\\" + folders[2] + "\\" + CLIP_CYCLE_20[0] + "\\"
+
+            # Map1Layers = Walk_10_service_area_clip
+            Site = QgsVectorLayer(MapSite, "Site", "ogr")
+            Cycle_10_Map = QgsVectorLayer(CH_CYCLE_10, "Approximate 10 minute cycle time from site", "ogr")
+            Cycle_20_Map = QgsVectorLayer(CH_CYCLE_20, "Approximate 20 minute cycle time from site", "ogr")
+
+            mapbox_basemap = 'type=xyz&url=https://api.mapbox.com/styles/v1/chris-ryan-wsp/ck3r54pn8041b1cmzvdaxv1qc/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiY2hyaXMtcnlhbi13c3AiLCJhIjoiY2szazRzNnhqMG8xZTNjb2N5NDVqeTV5MSJ9.hpX0Il1EIUT5pc7v-Z7lSQ'
+            rlayer = QgsRasterLayer(mapbox_basemap, 'Mapbox', 'wms')
+            QgsProject.instance().addMapLayer(rlayer)
+
+            Layerlist = []
+            for item in os.listdir(Map1Layers):
+                if item[-3:] == 'shp':
+                    Layerlist.append(item)
+            for layer in Layerlist:
+                shplayer = iface.addVectorLayer(Map1Layers + "//" + layer, "", "ogr")
+                shplayer.setCrs(QgsCoordinateReferenceSystem(27700))
+                project1.addMapLayer(shplayer)
+
+            project1.addMapLayer(Site)
+            project1.addMapLayer(Cycle_20_Map)
+            project1.addMapLayer(Cycle_10_Map)
+            ex = Cycle_20_Map.extent()
+
+            # transforms layer projection
+
+            proj = QgsProject.instance()
+            if Site.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(Site.crs(), proj.crs(), proj)
+                ex = tr.transform(ex)
+            if shplayer.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(shplayer.crs(), proj.crs(), proj)
+
+            Layermap = QgsProject.instance().mapLayers()
+            RemoveLayers = []
+            for name, layer in Layermap.items():
+                if layer.isValid():
+                    if layer.type() == QgsMapLayer.VectorLayer:
+                        if layer.featureCount() == 0:
+                            RemoveLayers.append(layer.id())
+            if len(RemoveLayers) > 0:
+                QgsProject.instance().removeMapLayers(RemoveLayers)
+                # Add a small space/border on each side of the layer
+                hborder = ex.height() / 70
+                wborder = ex.width() / 70
+                ex.set(ex.xMinimum() - wborder,
+                       ex.yMinimum() - hborder,
+                       ex.xMaximum() + wborder,
+                       ex.yMaximum() + hborder,
+                       )
+
+                iface.mapCanvas().setExtent(ex)
+
+            # ------create map item in the layout_---------------------------------------------------------------------------------------------
+
+            layers1 = QgsProject.instance().mapLayersByName('Site')
+            layer1 = layers1[0]
+            project = QgsProject.instance()
+            manager = project.layoutManager()
+            layoutName = 'Map 1: Active Travel Zones'
+            layouts_list = manager.printLayouts()
+
+            # removes dublicate layers produced
+            for layout in layouts_list:
+                if layout.name() == layoutName:
+                    manager.removeLayout(layout)
+
+            layout = QgsPrintLayout(project)
+            layout.initializeDefaults()
+            layout.setName(layoutName)
+
+            manager.addLayout(layout)
+            canvas = iface.mapCanvas()
+
+            # Creating a frame around map and legend - min/max in mm in layout
+            xmin = 5
+            xmax = 292
+            ymin = 2
+            ymax = 208
+            polygon = QPolygonF()
+            polygon.append(QPointF(xmin, ymin))
+            polygon.append(QPointF(xmax, ymin))
+            polygon.append(QPointF(xmax, ymax))
+            polygon.append(QPointF(xmin, ymax))
+
+            # Create the polygon from nodes
+            polygonItem = QgsLayoutItemPolygon(polygon, layout)
+
+            # Add to the layout
+            layout.addItem(polygonItem)
+
+            # adding map to layout
+            Map = QgsLayoutItemMap.create(layout)
+            Map.setRect(10, 10, 210, 90)
+            ms = QgsMapSettings()
+            ms.setLayers([layer1])
+            Map.setFrameEnabled(True)
+            Map.setExtent(canvas.extent())
+            Map.setScale(80000, forceUpdate=1)
+
+            layout.addLayoutItem(Map)
+
+            Map.attemptMove(QgsLayoutPoint(4, 2, QgsUnitTypes.LayoutMillimeters))
+            # ============================(Width, Length)
+            Map.attemptResize(QgsLayoutSize(215, 206, QgsUnitTypes.LayoutMillimeters))
+
+            # addding custom arrow
+            picture2 = QgsLayoutItemPicture(layout)
+            picture2.update()
+            layout.addLayoutItem(picture2)
+            picture2.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\NorthArrow_Red.png")
+            picture2.attemptMove(QgsLayoutPoint(5, 3, QgsUnitTypes.LayoutMillimeters))
+            picture2.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding scalebar
+            scalebar = QgsLayoutItemScaleBar(layout)
+            scalebar.setStyle('Single Box')
+            scalebar.setUnits(QgsUnitTypes.DistanceKilometers)
+            scalebar.setNumberOfSegments(3)
+            scalebar.setNumberOfSegmentsLeft(0)
+            scalebar.setUnitsPerSegment(1)
+            scalebar.setLinkedMap(Map)
+            scalebar.setUnitLabel('km')
+            scalebar.setFont(QFont('Arial', 8))
+            scalebar.refresh()
+            layout.addLayoutItem(scalebar)
+            # ============================------(Width, Length)
+            scalebar.attemptMove(QgsLayoutPoint(148, 196, QgsUnitTypes.LayoutMillimeters))
+            scalebar.applyDefaultSize
+            scalebar.refresh()
+
+            # adding title
+            title = QgsLayoutItemLabel(layout)
+            title.setBackgroundEnabled(True)
+            title.setText('Map 1: Active Travel Zones')
+            title.setFont(QFont('Arial', 20))
+            title.setFontColor(QColor('red'))
+            title.adjustSizeToText()
+            layout.addLayoutItem(title)
+            # ============================---(Width, Length)
+            title.attemptMove(QgsLayoutPoint(82, 3, QgsUnitTypes.LayoutMillimeters))
+            title.refresh()
+
+            # adding WSP logo
+            picture = QgsLayoutItemPicture(layout)
+            picture.update()
+            layout.addLayoutItem(picture)
+            picture.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\wsp_logo.png")
+            picture.attemptMove(QgsLayoutPoint(5, 195, QgsUnitTypes.LayoutMillimeters))
+            picture.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding legend and layers into legend
+            legend = QgsLayoutItemLegend(layout)
+            legend.setLinkedMap(Map)
+            legend.refresh()
+            layouts_check = QgsProject.instance().layoutManager()
+            legend.setTitle("Key:")
+            newFont = QFont("Aerial", 8)
+            LargeFont = QFont("Aerial", 12)
+            legend.setStyleFont(QgsLegendStyle.Title, LargeFont)
+            legend.setStyleFont(QgsLegendStyle.Subgroup, newFont)
+            legend.setStyleFont(QgsLegendStyle.SymbolLabel, newFont)
+            layout.addLayoutItem(legend)
+
+            # ============================---(Width, Length)
+            legend.attemptMove(QgsLayoutPoint(221, 4, QgsUnitTypes.LayoutMillimeters))
+            legend.attemptResize(QgsLayoutSize(15, QgsUnitTypes.LayoutMillimeters))
+            legend.refresh()
+
+            # ----- Export map as PDF and PNG--------------------------------
+
+            OutMaps = projectGISFolder + "\\" + folders[4] + "\\"
+            fn = OutMaps + "Map 1.Active Travel Zones.png"
+            exporter = QgsLayoutExporter(layout)
+            exporter.exportToImage(fn, QgsLayoutExporter.ImageExportSettings())
+
+            # ------Map 1 completed---------------------
+
+            # layout.refresh()
+            project1.write()
+            project1.clear()
+
+            # ----------Creating Map 2----------------------------------------------------------------------------------------
+
+            Mapout = projectGISFolder + "\\" + folders[3] + "\\"
+            project2 = QgsProject.instance()
+            project2.setCrs(QgsCoordinateReferenceSystem(27700))
+            project2.setFileName(Mapout + Map2name)
+
+            MapSite = BNG_Sub_Folder_make + BNGFOLDER[0] + "\\" + "Site Location.shp"
+            Map2Layers = projectGISFolder + "\\" + folders[2] + "\\" + CLIP_CYCLE_10[0] + "\\"
+            # Map1Layers = Walk_10_service_area_clip
+            Site = QgsVectorLayer(MapSite, "Site", "ogr")
+            Cycle_10_Map = QgsVectorLayer(CH_CYCLE_10, "Approximate 10 minute cycle time from site", "ogr")
+            Walk_10_Map = QgsVectorLayer(CH_WALK_10, "Approximate 10 minute walk time from site", "ogr")
+
+            mapbox_basemap = 'type=xyz&url=https://api.mapbox.com/styles/v1/chris-ryan-wsp/ck3r54pn8041b1cmzvdaxv1qc/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiY2hyaXMtcnlhbi13c3AiLCJhIjoiY2szazRzNnhqMG8xZTNjb2N5NDVqeTV5MSJ9.hpX0Il1EIUT5pc7v-Z7lSQ'
+            rlayer = QgsRasterLayer(mapbox_basemap, 'Mapbox', 'wms')
+            QgsProject.instance().addMapLayer(rlayer)
+
+            Layerlist2 = []
+            print(Layerlist2)
+            for item in os.listdir(Map2Layers):
+                if item[-3:] == 'shp':
+                    Layerlist2.append(item)
+            for layer in Layerlist2:
+                shplayer = iface.addVectorLayer(Map2Layers + "//" + layer, "", "ogr")
+                shplayer.setCrs(QgsCoordinateReferenceSystem(27700))
+                project2.addMapLayer(shplayer)
+
+            project2.addMapLayer(Site)
+            project2.addMapLayer(Cycle_10_Map)
+            project2.addMapLayer(Walk_10_Map)
+            ex = Cycle_10_Map.extent()
+
+            # transforms layer projection
+
+            proj = QgsProject.instance()
+            if Site.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(Site.crs(), proj.crs(), proj)
+                ex = tr.transform(ex)
+            if shplayer.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(shplayer.crs(), proj.crs(), proj)
+            Layermap = QgsProject.instance().mapLayers()
+            RemoveLayers2 = []
+            for name, layer in Layermap.items():
+                if layer.isValid():
+                    if layer.type() == QgsMapLayer.VectorLayer:
+                        if layer.featureCount() == 0:
+                            RemoveLayers2.append(layer.id())
+            if len(RemoveLayers2) > 0:
+                QgsProject.instance().removeMapLayers(RemoveLayers2)
+            # Add a small space/border on each side of the layer
+            hborder = ex.height() / 70
+            wborder = ex.width() / 70
+            ex.set(ex.xMinimum() - wborder,
+                   ex.yMinimum() - hborder,
+                   ex.xMaximum() + wborder,
+                   ex.yMaximum() + hborder,
+                   )
+            iface.mapCanvas().setExtent(ex)
+            iface.mapCanvas().refresh()
+
+            # ------create map item in the layout_---------------------------------------------------------------------------------------------
+
+            layers2 = QgsProject.instance().mapLayersByName('Site')
+            layer2 = layers2[0]
+
+            project = QgsProject.instance()
+            manager = project.layoutManager()
+            layoutName = 'Map 2 - Neighbourhood & Most Important Journey'
+            layouts_list = manager.printLayouts()
+
+            # removes dublicate layers produced
+            for layout in layouts_list:
+                if layout.name() == layoutName:
+                    manager.removeLayout(layout)
+
+            layout = QgsPrintLayout(project)
+            layout.initializeDefaults()
+            layout.setName(layoutName)
+            manager.addLayout(layout)
+            canvas = iface.mapCanvas()
+
+            # Creating a frame around map and legend - min/max in mm in layout
+            xmin = 5
+            xmax = 292
+            ymin = 2
+            ymax = 208
+            polygon = QPolygonF()
+            polygon.append(QPointF(xmin, ymin))
+            polygon.append(QPointF(xmax, ymin))
+            polygon.append(QPointF(xmax, ymax))
+            polygon.append(QPointF(xmin, ymax))
+
+            # Create the polygon from nodes
+            polygonItem = QgsLayoutItemPolygon(polygon, layout)
+
+            # Add to the layout
+            layout.addItem(polygonItem)
+
+            Map2 = QgsLayoutItemMap.create(layout)
+            Map2.setRect(10, 10, 210, 90)
+            ms = QgsMapSettings()
+            ms.setLayers([layer2])
+
+            # adding map to layout
+            Map2.setFrameEnabled(True)
+            Map2.setExtent(canvas.extent())
+            Map2.setScale(40000, forceUpdate=1)
+
+            layout.addLayoutItem(Map2)
+
+            Map2.attemptMove(QgsLayoutPoint(4, 2, QgsUnitTypes.LayoutMillimeters))
+            # ============================(Width, Length)
+            Map2.attemptResize(QgsLayoutSize(215, 206, QgsUnitTypes.LayoutMillimeters))
+
+            # addding custom arrow
+            picture2 = QgsLayoutItemPicture(layout)
+            picture2.update()
+            layout.addLayoutItem(picture2)
+            picture2.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\NorthArrow_Red.png")
+            picture2.attemptMove(QgsLayoutPoint(5, 3, QgsUnitTypes.LayoutMillimeters))
+            picture2.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding scalebar
+            scalebar = QgsLayoutItemScaleBar(layout)
+            scalebar.setStyle('Single Box')
+            scalebar.setUnits(QgsUnitTypes.DistanceKilometers)
+            scalebar.setNumberOfSegments(4)
+            scalebar.setNumberOfSegmentsLeft(0)
+            scalebar.setUnitsPerSegment(0.5)
+            scalebar.setLinkedMap(Map2)
+            scalebar.setUnitLabel('km')
+            scalebar.setFont(QFont('Arial', 8))
+            scalebar.refresh()
+            layout.addLayoutItem(scalebar)
+            # ============================------(Width, Length)
+            scalebar.attemptMove(QgsLayoutPoint(160, 196, QgsUnitTypes.LayoutMillimeters))
+            scalebar.applyDefaultSize
+            scalebar.refresh()
+
+            # adding title
+            title = QgsLayoutItemLabel(layout)
+            title.setBackgroundEnabled(True)
+            title.setText('Map 2 - Neighbourhood & Most Important Journeys')
+            title.setFont(QFont('Arial', 20))
+            title.setFontColor(QColor('red'))
+            title.adjustSizeToText()
+            layout.addLayoutItem(title)
+            # ============================---(Width, Length)
+            title.attemptMove(QgsLayoutPoint(30, 3, QgsUnitTypes.LayoutMillimeters))
+            title.refresh()
+
+            # adding WSP logo
+            picture = QgsLayoutItemPicture(layout)
+            picture.update()
+            layout.addLayoutItem(picture)
+            picture.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\wsp_logo.png")
+            picture.attemptMove(QgsLayoutPoint(5, 195, QgsUnitTypes.LayoutMillimeters))
+            picture.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding legend and layers into legend
+            legend = QgsLayoutItemLegend(layout)
+            legend.setLinkedMap(Map2)
+            legend.refresh()
+            layouts_check = QgsProject.instance().layoutManager()
+
+            legend.setTitle("Key:")
+            newFont = QFont("Aerial", 8)
+            LargeFont = QFont("Aerial", 12)
+            legend.setStyleFont(QgsLegendStyle.Title, LargeFont)
+            legend.setStyleFont(QgsLegendStyle.Subgroup, newFont)
+            legend.setStyleFont(QgsLegendStyle.SymbolLabel, newFont)
+            # legend.setFrameEnabled(True)
+
+            # position legend
+            layout.addLayoutItem(legend)
+            # ============================---(Width, Length)
+            legend.attemptMove(QgsLayoutPoint(221, 4, QgsUnitTypes.LayoutMillimeters))
+            legend.attemptResize(QgsLayoutSize(20, 206, QgsUnitTypes.LayoutMillimeters))
+
+            legend.refresh()
+
+            # ----- Export map as PDF and PNG--------------------------------
+
+            OutMaps = projectGISFolder + "\\" + folders[4] + "\\"
+            fn = OutMaps + "Map 2 - Neighbourhood & Most Important Journeys.png"
+            exporter = QgsLayoutExporter(layout)
+            exporter.exportToImage(fn, QgsLayoutExporter.ImageExportSettings())
+
+            layout.refresh()
+            project2.write()
+            project2.clear()
+
+            # ----------Creating Map 3----------------------------------------------------------------------------------------
+
+            Mapout = projectGISFolder + "\\" + folders[3] + "\\"
+            project3 = QgsProject.instance()
+            project3.setCrs(QgsCoordinateReferenceSystem(3857))
+            project3.setFileName(Mapout + Map3name)
+
+            MapSite = BNG_Sub_Folder_make + BNGFOLDER[0] + "\\" + "Site Location.shp"
+            Map3Layers = projectGISFolder + "\\" + folders[2] + "\\" + CLIP_WALK_10[0] + "\\"
+            Site = QgsVectorLayer(MapSite, "Site", "ogr")
+            Walk_10_Map = QgsVectorLayer(CH_WALK_10, "Approximate 10 minute walk time from site", "ogr")
+
+            mapbox_basemap = 'type=xyz&url=https://api.mapbox.com/styles/v1/chris-ryan-wsp/ck3r54pn8041b1cmzvdaxv1qc/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiY2hyaXMtcnlhbi13c3AiLCJhIjoiY2szazRzNnhqMG8xZTNjb2N5NDVqeTV5MSJ9.hpX0Il1EIUT5pc7v-Z7lSQ'
+            rlayer = QgsRasterLayer(mapbox_basemap, 'Mapbox', 'wms')
+            QgsProject.instance().addMapLayer(rlayer)
+
+            Layerlist3 = []
+            for item in os.listdir(Map3Layers):
+                if item[-3:] == 'shp':
+                    Layerlist3.append(item)
+            for layer in Layerlist3:
+                shplayer = iface.addVectorLayer(Map3Layers + "//" + layer, "", "ogr")
+                shplayer.setCrs(QgsCoordinateReferenceSystem(27700))
+                project3.addMapLayer(shplayer)
+
+            project3.addMapLayer(Site)
+            project3.addMapLayer(Walk_10_Map)
+            ex = Walk_10_Map.extent()
+
+            # transforms layer projection
+
+            proj = QgsProject.instance()
+            if Site.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(Site.crs(), proj.crs(), proj)
+                ex = tr.transform(ex)
+            if shplayer.crs().authid() != proj.crs().authid():
+                tr = QgsCoordinateTransform(shplayer.crs(), proj.crs(), proj)
+            Layermap = QgsProject.instance().mapLayers()
+            RemoveLayers3 = []
+            for name, layer in Layermap.items():
+                if layer.isValid():
+                    if layer.type() == QgsMapLayer.VectorLayer:
+                        if layer.featureCount() == 0:
+                            RemoveLayers3.append(layer.id())
+            if len(RemoveLayers3) > 0:
+                QgsProject.instance().removeMapLayers(RemoveLayers3)
+
+            # Add a small space/border on each side of the layer
+            hborder = ex.height() / 70
+            wborder = ex.width() / 70
+            ex.set(ex.xMinimum() - wborder,
+                   ex.yMinimum() - hborder,
+                   ex.xMaximum() + wborder,
+                   ex.yMaximum() + hborder,
+                   )
+
+            iface.mapCanvas().setExtent(ex)
+            iface.mapCanvas().refresh()
+
+            # ------create map item in the layout_---------------------------------------------------------------------------------------------
+
+            layers3 = QgsProject.instance().mapLayersByName('Site')
+            layer3 = layers3[0]
+
+            project = QgsProject.instance()
+            manager = project.layoutManager()
+            layoutName = 'Map 3 - Neighbourhood Safety'
+            layouts_list = manager.printLayouts()
+
+            # removes dublicate layers produced
+            for layout in layouts_list:
+                if layout.name() == layoutName:
+                    manager.removeLayout(layout)
+
+            layout = QgsPrintLayout(project)
+            layout.initializeDefaults()
+            layout.setName(layoutName)
+            manager.addLayout(layout)
+            canvas = iface.mapCanvas()
+
+            # Creating a frame around map and legend - min/max in mm in layout
+            xmin = 5
+            xmax = 292
+            ymin = 2
+            ymax = 208
+            polygon = QPolygonF()
+            polygon.append(QPointF(xmin, ymin))
+            polygon.append(QPointF(xmax, ymin))
+            polygon.append(QPointF(xmax, ymax))
+            polygon.append(QPointF(xmin, ymax))
+
+            # Create the polygon from nodes
+            polygonItem = QgsLayoutItemPolygon(polygon, layout)
+
+            # Add to the layout
+            layout.addItem(polygonItem)
+
+            Map3 = QgsLayoutItemMap.create(layout)
+            Map3.setRect(10, 10, 210, 90)
+            ms = QgsMapSettings()
+            ms.setLayers([layer3])
+
+            # adding map to layout
+            Map3.setFrameEnabled(True)
+            Map3.setExtent(canvas.extent())
+            Map3.setScale(20000, forceUpdate=1)
+
+            layout.addLayoutItem(Map3)
+
+            Map3.attemptMove(QgsLayoutPoint(4, 2, QgsUnitTypes.LayoutMillimeters))
+            # ============================(Width, Length)
+            Map3.attemptResize(QgsLayoutSize(215, 206, QgsUnitTypes.LayoutMillimeters))
+
+            # addding custom arrow
+            picture2 = QgsLayoutItemPicture(layout)
+            picture2.update()
+            layout.addLayoutItem(picture2)
+            picture2.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\NorthArrow_Red.png")
+            picture2.attemptMove(QgsLayoutPoint(5, 3, QgsUnitTypes.LayoutMillimeters))
+            picture2.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding scalebar
+            scalebar = QgsLayoutItemScaleBar(layout)
+            scalebar.setStyle('Single Box')
+            scalebar.setUnits(QgsUnitTypes.DistanceKilometers)
+            scalebar.setNumberOfSegments(2)
+            scalebar.setNumberOfSegmentsLeft(0)
+            scalebar.setUnitsPerSegment(0.5)
+            scalebar.setLinkedMap(Map3)
+            scalebar.setUnitLabel('km')
+            scalebar.setFont(QFont('Arial', 8))
+            scalebar.refresh()
+            layout.addLayoutItem(scalebar)
+            # ============================------(Width, Length)
+            scalebar.attemptMove(QgsLayoutPoint(160, 196, QgsUnitTypes.LayoutMillimeters))
+            scalebar.applyDefaultSize
+            scalebar.refresh()
+
+            # adding title
+            title = QgsLayoutItemLabel(layout)
+            title.setBackgroundEnabled(True)
+            title.setText('Map 3 - Neighbourhood Safety')
+            title.setFont(QFont('Arial', 20))
+            title.setFontColor(QColor('red'))
+            title.adjustSizeToText()
+            layout.addLayoutItem(title)
+            # ============================---(Width, Length)
+            title.attemptMove(QgsLayoutPoint(85, 3, QgsUnitTypes.LayoutMillimeters))
+            title.refresh()
+
+            # adding WSP logo
+            picture = QgsLayoutItemPicture(layout)
+            picture.update()
+            layout.addLayoutItem(picture)
+            picture.setPicturePath(
+                r"\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Map Template Items\wsp_logo.png")
+            picture.attemptMove(QgsLayoutPoint(5, 195, QgsUnitTypes.LayoutMillimeters))
+            picture.setResizeMode(QgsLayoutItemPicture.FrameToImageSize)
+
+            # adding legend and layers into legend
+            legend = QgsLayoutItemLegend(layout)
+            legend.setLinkedMap(Map3)
+            legend.refresh()
+            layouts_check = QgsProject.instance().layoutManager()
+            legend.setTitle("Key:")
+            newFont = QFont("Aerial", 8)
+            LargeFont = QFont("Aerial", 12)
+            legend.setStyleFont(QgsLegendStyle.Title, LargeFont)
+            legend.setStyleFont(QgsLegendStyle.Subgroup, newFont)
+            legend.setStyleFont(QgsLegendStyle.SymbolLabel, newFont)
+            layout.addLayoutItem(legend)
+            # ============================---(Width, Length)
+            legend.attemptMove(QgsLayoutPoint(221, 4, QgsUnitTypes.LayoutMillimeters))
+            legend.attemptResize(QgsLayoutSize(20, 206, QgsUnitTypes.LayoutMillimeters))
+            legend.refresh()
+
+            # ----- Export map as PDF and PNG--------------------------------
+
+            OutMaps = projectGISFolder + "\\" + folders[4] + "\\"
+            fn = OutMaps + "Map 3 - Neighbourhood Safety.png"
+            exporter = QgsLayoutExporter(layout)
+            exporter.exportToImage(fn, QgsLayoutExporter.ImageExportSettings())
+
+            layout.refresh()
+            project3.write()
+            project3.clear()
+
+            iface.messageBar().pushMessage("Tool completed, open project folder", level=3)
+            # add delay
