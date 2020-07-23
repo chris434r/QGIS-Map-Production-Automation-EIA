@@ -220,7 +220,7 @@ class EIA_Map_Production_Automation:
             if result:
                 projectfolder = self.dlg.Proj_Folder.text()
 
-                projectGISFolder = projectfolder + "\\" + "ATZ Automation GIS"
+                projectGISFolder = projectfolder + "\\" + "EIA Constraints Map Production"
                 folders = ["1. Site Location Shapefile", "2.Project Buffers", "3. Clipped Outputs",
                            "4. QGIS Map Docs", "5. Map Outputs"]
             try:
@@ -234,8 +234,6 @@ class EIA_Map_Production_Automation:
                     os.makedirs(path, 493)
             except:
                 print("error")
-
-
 
 
             # ----------------Clipped folder---------------------------------------------------------
@@ -278,12 +276,10 @@ class EIA_Map_Production_Automation:
 
             Buffer_Folder = projectGISFolder + "\\" + folders[1] + "\\"
 
-
-
-            Buff200 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
+            Buff200 = Buffer_Folder + "\\" + "Site Location 200m Buffer.shp"
             Buff500 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
-            Buff600 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
-            Buff1000 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
+            Buff600 = Buffer_Folder + "\\" + "Site Location 600m Buffer.shp"
+            Buff1000 = Buffer_Folder + "\\" + "Site Location 1000m Buffer.shp"
 
 
             processing.run("native:buffer",
@@ -304,16 +300,10 @@ class EIA_Map_Production_Automation:
                             'OUTPUT': Buff1000})
 
 
-
-
-
-
-
-
             # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            # Clipping Layers to simple service area outputs
+            # Clipping Layers to buffers
 
-
+            clip_output_200m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
             clip_output_500m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
             clip_output_600m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_20[0] + "\\"
             clip_output_1km = Clipped_Sub_Folder + "\\" + CLIP_WALK_10[0] + "\\"
@@ -323,7 +313,7 @@ class EIA_Map_Production_Automation:
             Map3_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 3' + "\\"
 
 
-            # 20 Minute Cycle clip for Map 1 layers:
+            # 200 Metre buffer clip for Map 1 layers:
             map1list = []
             for item in os.listdir(Map1_Data):
                 if item[-3:] == 'shp':
@@ -332,10 +322,10 @@ class EIA_Map_Production_Automation:
             for layer in map1list:
                 processing.run("native:clip",
                                {'INPUT': Map1_Data + layer,
-                                'OVERLAY': TEMPORARY_OUTPUT2,
-                                'OUTPUT': Cycle_20_service_area_clip_output + layer})
+                                'OVERLAY': Buff200,
+                                'OUTPUT': clip_output_200m + layer})
 
-            # 10 Minute Cycle clip for Map 2 layers:
+            # 500 Metre Buffer Cycle clip for Map 2 layers:
 
             map2list = []
 
@@ -345,8 +335,8 @@ class EIA_Map_Production_Automation:
             for layer in map2list:
                 processing.run("native:clip",
                                {'INPUT': Map2_Data + "\\" + layer,
-                                'OVERLAY': TEMPORARY_OUTPUT,
-                                'OUTPUT': Cycle_10_service_area_clip_output + layer})
+                                'OVERLAY': Buff500,
+                                'OUTPUT': clip_output_500m + layer})
 
             # 10 Minute Walk Clip for Map 3 layers:
 
@@ -358,8 +348,8 @@ class EIA_Map_Production_Automation:
             for layer in map3list:
                 processing.run("native:clip",
                                {'INPUT': Map3_Data + "\\" + layer,
-                                'OVERLAY': TEMPORARY_OUTPUT,
-                                'OUTPUT': Walk_10_service_area_clip_output + layer})
+                                'OVERLAY': Buff600,
+                                'OUTPUT': clip_output_500m + layer})
 
 
            #-----------------------------------------------------------------------------------------------------------------------------------------------------
