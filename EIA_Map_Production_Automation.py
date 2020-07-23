@@ -235,39 +235,7 @@ class EIA_Map_Production_Automation:
             except:
                 print("error")
 
-            # 2. creating buffer distance folders within main buffer folder
 
-            if result:
-                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
-                Buffer_Sub_Folder_make = Buffers_Sub_Folder
-                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 500m"
-                Buffer_500 = ["Site Buffer - 500m "]
-            try:
-                path = Sub_Folder
-                os.makedirs(path, 493)
-            except:
-                print("error")
-
-            if result:
-                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
-                Buffer_Sub_Folder_make = Buffers_Sub_Folder
-                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 600m"
-                Buffer_600 = ["Site Buffer - 600m "]
-            try:
-                path = Sub_Folder
-                os.makedirs(path, 493)
-            except:
-                print("error")
-            if result:
-                Buffers_Sub_Folder = projectGISFolder + "\\" + folders[1] + "\\"
-                Buffer_Sub_Folder_make = Buffers_Sub_Folder
-                Sub_Folder = Buffer_Sub_Folder_make + "\\" + "Site Buffer - 1km"
-                Buffer_1000 = ["Site Buffer - 1km "]
-            try:
-                path = Sub_Folder
-                os.makedirs(path, 493)
-            except:
-                print("error")
 
 
             # ----------------Clipped folder---------------------------------------------------------
@@ -304,141 +272,56 @@ class EIA_Map_Production_Automation:
             except:
                 print("error")
 
-            # 2.creating point layer from user input
+           #--------------------------------------------------------------------------------
 
-            Site_loc = projectGISFolder + "\\" + folders[0] + "\\"
-            Site = Site_loc + "Site.shp"
-            layerFields = QgsFields()
-            layerFields.append(QgsField('id', QVariant.Int))
-            layerFields.append(QgsField('value', QVariant.Double))
-            layerFields.append(QgsField('name', QVariant.String))
+            # creating buffers
 
-            writer = QgsVectorFileWriter(Site, 'UTF-8', layerFields, QgsWkbTypes.Point, \
-                                         QgsCoordinateReferenceSystem('EPSG:4326'), 'ESRI Shapefile')
+            Buffer_Folder = projectGISFolder + "\\" + folders[1] + "\\"
 
-            feat = QgsFeature()
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(self.dlg.LONG.value(), self.dlg.LAT.value())))
-            # feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(0.05274, 51.52195)))
-            feat.setAttributes([1, 1.1, 'name'])
-            writer.addFeature(feat)
-            del writer
 
-            # 3:reprojecting user input point to BNG
 
-            # 3a.creating sub folder for projected shapefile
+            Buff200 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
+            Buff500 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
+            Buff600 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
+            Buff1000 = Buffer_Folder + "\\" + "Site Location 500m Buffer.shp"
 
-            if result:
-                BNG_Sub_Folder_make = Site_loc
-                Sub_Folder = BNG_Sub_Folder_make + "\\" + "BNG"
-                BNGFOLDER = ["BNG"]
-            try:
-                path = Sub_Folder
-                os.makedirs(path, 493)
-            except:
-                print("error")
 
-            # 3b.running reproject processing
+            processing.run("native:buffer",
+                           {'INPUT': 'E:\\EIA\\Data\\Mock centerline\\Mock_centerline.shp', 'DISTANCE': 200,
+                            'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': True,
+                            'OUTPUT': Buff200})
+            processing.run("native:buffer",
+                           {'INPUT': 'E:\\EIA\\Data\\Mock centerline\\Mock_centerline.shp', 'DISTANCE': 500,
+                            'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': True,
+                            'OUTPUT': Buff500})
+            processing.run("native:buffer",
+                           {'INPUT': 'E:\\EIA\\Data\\Mock centerline\\Mock_centerline.shp', 'DISTANCE': 600,
+                            'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': True,
+                            'OUTPUT': Buff600})
+            processing.run("native:buffer",
+                           {'INPUT': 'E:\\EIA\\Data\\Mock centerline\\Mock_centerline.shp', 'DISTANCE': 1000,
+                            'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2, 'DISSOLVE': True,
+                            'OUTPUT': Buff1000})
 
-            BNG_Convert = BNG_Sub_Folder_make + BNGFOLDER[0] + "\\" + "Site Location.shp"
-            processing.run("native:reprojectlayer",
-                           {'INPUT': Site,
-                            'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:27700'),
-                            'OUTPUT': BNG_Convert})
-            # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-            # creating service areas from Site Location point in BNG
-            # directory setting:
 
-            BNG_Converted_Point_Folder = Site_loc + "\\" + BNGFOLDER[0] + "\\"
-            Road_Network = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\Roads\NAVTEQ_2019'
-            Start_Point = BNG_Converted_Point_Folder + "Site Location.shp"
 
-            Service_Area_Sub_Folder = Isochrone_Sub_Folder + "\\" + Service_Area[0] + "\\"
-            Ten_Minute_Walk_Sub_Folder = Isochrone_Sub_Folder + "\\" + WALK_10[0] + "\\"
-            Ten_Minute_Cycle_Sub_Folder = Isochrone_Sub_Folder + "\\" + CYCLE_10[0] + "\\"
-            Twenty_Minute_Cycle_Sub_Folder = Isochrone_Sub_Folder + "\\" + CYCLE_20[0] + "\\"
 
-            SA_CYCLE_10 = Service_Area_Sub_Folder + "Cycle_Service_Area_10_Min.shp"
-            SA_CYCLE_20 = Service_Area_Sub_Folder + "Cycle_Service_Area_20_Min.shp"
-            SA_WALK_10 = Service_Area_Sub_Folder + "Walking_Service_Area_10_Min.shp"
 
-            CH_WALK_10 = Ten_Minute_Walk_Sub_Folder + "Approximate 10 minute walk time from site.shp"
-            CH_CYCLE_10 = Ten_Minute_Cycle_Sub_Folder + "Approximate 10 minute cycle time from site.shp"
-            CH_CYCLE_20 = Twenty_Minute_Cycle_Sub_Folder + "Approximate 20 minute cycle time from site.shp"
 
-            # creating walking service area 10 min----------------------------------------------------------------------------------------------------------------------------------------------------
-
-            processing.run("qgis:serviceareafromlayer",
-                           {'INPUT': Road_Network,
-                            'START_POINTS': Start_Point,
-                            'STRATEGY': 0,
-                            'TRAVEL_COST': 800,
-                            'DIRECTION_FIELD': None,
-                            'VALUE_FORWARD': '',
-                            'VALUE_BACKWARD': '',
-                            'VALUE_BOTH': '',
-                            'DEFAULT_DIRECTION': 2,
-                            'SPEED_FIELD': None,
-                            'DEFAULT_SPEED': 5,
-                            'TOLERANCE': 0,
-                            'INCLUDE_BOUNDS': False,
-                            'OUTPUT_LINES': SA_WALK_10})
-            processing.run("native:convexhull",
-                           {'INPUT': SA_WALK_10,
-                            'OUTPUT': CH_WALK_10})
-
-            # creating cycle service area 10 mins-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-            processing.run("qgis:serviceareafromlayer",
-                           {'INPUT': Road_Network,
-                            'START_POINTS': Start_Point,
-                            'STRATEGY': 0,
-                            'TRAVEL_COST': 2600,
-                            'DIRECTION_FIELD': None,
-                            'VALUE_FORWARD': '',
-                            'VALUE_BACKWARD': '',
-                            'VALUE_BOTH': '',
-                            'DEFAULT_DIRECTION': 2,
-                            'SPEED_FIELD': None,
-                            'DEFAULT_SPEED': 16,
-                            'TOLERANCE': 0,
-                            'INCLUDE_BOUNDS': False,
-                            'OUTPUT_LINES': SA_CYCLE_10})
-            processing.run("native:convexhull", \
-                           {'INPUT': SA_CYCLE_10,
-                            'OUTPUT': CH_CYCLE_10})
-
-            # creating cycle service area-------20 mins -----------------------
-
-            processing.run("qgis:serviceareafromlayer", \
-                           {'INPUT': Road_Network, \
-                            'START_POINTS': Start_Point, \
-                            'STRATEGY': 0, \
-                            'TRAVEL_COST': 5330, \
-                            'DIRECTION_FIELD': None,
-                            'VALUE_FORWARD': '', \
-                            'VALUE_BACKWARD': '', \
-                            'VALUE_BOTH': '', \
-                            'DEFAULT_DIRECTION': 2, \
-                            'SPEED_FIELD': None, \
-                            'DEFAULT_SPEED': 16, \
-                            'TOLERANCE': 0, \
-                            'INCLUDE_BOUNDS': False, \
-                            'OUTPUT_LINES': SA_CYCLE_20})
-            processing.run("native:convexhull", \
-                           {'INPUT': SA_CYCLE_20,
-                            'OUTPUT': CH_CYCLE_20})
 
             # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             # Clipping Layers to simple service area outputs
+
+
+            clip_output_500m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
+            clip_output_600m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_20[0] + "\\"
+            clip_output_1km = Clipped_Sub_Folder + "\\" + CLIP_WALK_10[0] + "\\"
 
             Map1_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 1' + "\\"
             Map2_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 2' + "\\"
             Map3_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 3' + "\\"
 
-            Cycle_10_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
-            Cycle_20_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_20[0] + "\\"
-            Walk_10_service_area_clip_output = Clipped_Sub_Folder + "\\" + CLIP_WALK_10[0] + "\\"
 
             # 20 Minute Cycle clip for Map 1 layers:
             map1list = []
@@ -449,7 +332,7 @@ class EIA_Map_Production_Automation:
             for layer in map1list:
                 processing.run("native:clip",
                                {'INPUT': Map1_Data + layer,
-                                'OVERLAY': CH_CYCLE_20,
+                                'OVERLAY': TEMPORARY_OUTPUT2,
                                 'OUTPUT': Cycle_20_service_area_clip_output + layer})
 
             # 10 Minute Cycle clip for Map 2 layers:
@@ -462,7 +345,7 @@ class EIA_Map_Production_Automation:
             for layer in map2list:
                 processing.run("native:clip",
                                {'INPUT': Map2_Data + "\\" + layer,
-                                'OVERLAY': CH_CYCLE_10,
+                                'OVERLAY': TEMPORARY_OUTPUT,
                                 'OUTPUT': Cycle_10_service_area_clip_output + layer})
 
             # 10 Minute Walk Clip for Map 3 layers:
@@ -475,8 +358,11 @@ class EIA_Map_Production_Automation:
             for layer in map3list:
                 processing.run("native:clip",
                                {'INPUT': Map3_Data + "\\" + layer,
-                                'OVERLAY': CH_WALK_10,
+                                'OVERLAY': TEMPORARY_OUTPUT,
                                 'OUTPUT': Walk_10_service_area_clip_output + layer})
+
+
+           #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
             # importing symbology into output shapefile folders:
             main_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Main'
