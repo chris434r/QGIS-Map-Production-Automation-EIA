@@ -240,9 +240,8 @@ class EIA_Map_Production_Automation:
 
             if result:
                 Clipped_Sub_Folder = projectGISFolder + "\\" + folders[2] + "\\"
-                Clipped_Sub_Folder_make = Clipped_Sub_Folder
-                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 2 Clipped Layers"
-                CLIP_CYCLE_10 = ["Map 2 Clipped Layers"]
+                Sub_Folder = Clipped_Sub_Folder + "\\" + "Clipped Constraints 200m"
+                CC_200m = ["Clipped Constraints 200m"]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
@@ -250,20 +249,27 @@ class EIA_Map_Production_Automation:
                 print("error")
 
             if result:
-                Clipped_Sub_Folder_make = Clipped_Sub_Folder
-
-                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 1 Clipped Layers"
-                CLIP_CYCLE_20 = ["Map 1 Clipped Layers"]
+                Clipped_Sub_Folder = projectGISFolder + "\\" + folders[2] + "\\"
+                Sub_Folder = Clipped_Sub_Folder + "\\" + "Clipped Constraints 500m"
+                CC_500m = ["Clipped Constraints 500m"]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
             except:
                 print("error")
             if result:
-                Clipped_Sub_Folder_make = Clipped_Sub_Folder
-
-                Sub_Folder = Clipped_Sub_Folder_make + "\\" + "Map 3 Clipped Layers"
-                CLIP_WALK_10 = ["Map 3 Clipped Layers"]
+                Clipped_Sub_Folder_= projectGISFolder + "\\" + folders[2] + "\\"
+                Sub_Folder = Clipped_Sub_Folder + "\\" + "Clipped Constraints 600m"
+                CC_600m = ["Clipped Constraints 600m"]
+            try:
+                path = Sub_Folder
+                os.makedirs(path, 493)
+            except:
+                print("error")
+            if result:
+                Clipped_Sub_Folder_= projectGISFolder + "\\" + folders[2] + "\\"
+                Sub_Folder = Clipped_Sub_Folder + "\\" + "Clipped Constraints 1000m"
+                CC_1000m = ["Clipped Constraints 1000m"]
             try:
                 path = Sub_Folder
                 os.makedirs(path, 493)
@@ -303,67 +309,54 @@ class EIA_Map_Production_Automation:
             # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             # Clipping Layers to buffers
 
-            clip_output_200m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
-            clip_output_500m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_10[0] + "\\"
-            clip_output_600m = Clipped_Sub_Folder + "\\" + CLIP_CYCLE_20[0] + "\\"
-            clip_output_1km = Clipped_Sub_Folder + "\\" + CLIP_WALK_10[0] + "\\"
+            clip_output_200m = Clipped_Sub_Folder + "\\" + CC_200m[0] + "\\"
+            clip_output_500m = Clipped_Sub_Folder + "\\" + CC_500m[0] + "\\"
+            clip_output_600m = Clipped_Sub_Folder + "\\" + CC_600m[0] + "\\"
+            clip_output_1km = Clipped_Sub_Folder + "\\" + CC_1000m[0] + "\\"
 
-            Map1_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 1' + "\\"
-            Map2_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 2' + "\\"
-            Map3_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\IN DATA\Maps\Map 3' + "\\"
+            EIA_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\EIA Datastore' + "\\"
 
 
-            # 200 Metre buffer clip for Map 1 layers:
-            map1list = []
-            for item in os.listdir(Map1_Data):
+            # Clipping Constraints to buffer distances:
+
+            datalist = []
+            for item in os.listdir(EIA_Data):
                 if item[-3:] == 'shp':
-                    map1list.append(item)
+                    datalist.append(item)
 
-            for layer in map1list:
+            for layer in datalist:
                 processing.run("native:clip",
-                               {'INPUT': Map1_Data + layer,
+                               {'INPUT': EIA_Data + layer,
                                 'OVERLAY': Buff200,
                                 'OUTPUT': clip_output_200m + layer})
-
-            # 500 Metre Buffer Cycle clip for Map 2 layers:
-
-            map2list = []
-
-            for item in os.listdir(Map2_Data):
-                if item[-3:] == 'shp':
-                    map2list.append(item)
-            for layer in map2list:
                 processing.run("native:clip",
-                               {'INPUT': Map2_Data + "\\" + layer,
+                               {'INPUT': EIA_Data + "\\" + layer,
                                 'OVERLAY': Buff500,
                                 'OUTPUT': clip_output_500m + layer})
-
-            # 10 Minute Walk Clip for Map 3 layers:
-
-            map3list = []
-            for item in os.listdir(Map3_Data):
-                if item[-3:] == 'shp':
-                    map3list.append(item)
-
-            for layer in map3list:
                 processing.run("native:clip",
-                               {'INPUT': Map3_Data + "\\" + layer,
+                               {'INPUT': EIA_Data + "\\" + layer,
                                 'OVERLAY': Buff600,
-                                'OUTPUT': clip_output_500m + layer})
+                                'OUTPUT': clip_output_600m + layer})
+                processing.run("native:clip",
+                               {'INPUT': EIA_Data + "\\" + layer,
+                                'OVERLAY': Buff1000,
+                                'OUTPUT': clip_output_1km + layer})
 
 
            #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
             # importing symbology into output shapefile folders:
-            main_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Main'
+            main_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\EIA Datastore\QML Symbols'
             main_symbols_list = []
             for symbols in os.listdir(main_symbol_folder):
                 if symbols[-3:] == 'qml':
                     main_symbols_list.append(main_symbol_folder + "\\" + symbols)
             for ms in main_symbols_list:
-                shutil.copy(ms, Walk_10_service_area_clip_output),
-                shutil.copy(ms, Cycle_10_service_area_clip_output),
-                shutil.copy(ms, Cycle_20_service_area_clip_output),
+                shutil.copy(ms, clip_output_200m),
+                shutil.copy(ms, clip_output_500m),
+                shutil.copy(ms, clip_output_600m),
+                shutil.copy(ms, clip_output_1000m),
+
 
             Walk10_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Isochrone\10 Min Walk'
             Cycle10_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\Active Travel Zones\QML Symbols\Isochrone\10 Min Cycle'
@@ -399,7 +392,7 @@ class EIA_Map_Production_Automation:
                     shutil.copy(s_symbol, BNG_Converted_Point_Folder),
 
             # ---Map names ----------------------------------------------------------
-            Map1name = "Map 1 - Active Travel Zone.qgs"
+            Map1name = "Map 1 - Site"
             Map2name = "Map 2 - Neighbourhood & Most Important Journey.qgs"
             Map3name = "Map 3 - Neighbourhood Safety.qgs"
 
