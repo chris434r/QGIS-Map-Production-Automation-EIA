@@ -357,7 +357,9 @@ class EIA_Map_Production_Automation:
             processing.run("native:reprojectlayer", {
                 'INPUT': Buff1500,
                 'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': Buff1500_WGS})
-
+            processing.run("native:reprojectlayer", {
+                'INPUT': Buff2000,
+                'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': Buff2000_WGS})
 
             # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             # Clipping Layers to buffers
@@ -365,9 +367,9 @@ class EIA_Map_Production_Automation:
             clip_output_200m = Clipped_Sub_Folder + "\\" + CC_200m[0] + "\\"
             clip_output_500m = Clipped_Sub_Folder + "\\" + CC_500m[0] + "\\"
             clip_output_600m = Clipped_Sub_Folder + "\\" + CC_600m[0] + "\\"
-            clip_output_1km = Clipped_Sub_Folder + "\\" + CC_1000m[0] + "\\"
-            clip_output_1_5km = Clipped_Sub_Folder + "\\" + CC_1500m[0] + "\\"
-            clip_output_2km = Clipped_Sub_Folder + "\\" + CC_2000m[0] + "\\"
+            clip_output_1000m = Clipped_Sub_Folder + "\\" + CC_1000m[0] + "\\"
+            clip_output_1500m = Clipped_Sub_Folder + "\\" + CC_1500m[0] + "\\"
+            clip_output_2000m = Clipped_Sub_Folder + "\\" + CC_2000m[0] + "\\"
 
 
             EIA_Data = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\EIA Datastore\Test Constraints data' + "\\"
@@ -396,18 +398,41 @@ class EIA_Map_Production_Automation:
                 processing.run("native:clip",
                                {'INPUT': EIA_Data + "\\" + layer,
                                 'OVERLAY': Buff1000,
-                                'OUTPUT': clip_output_1km + layer})
+                                'OUTPUT': clip_output_1000m + layer})
                 processing.run("native:clip",
                                {'INPUT': EIA_Data + "\\" + layer,
                                 'OVERLAY': Buff1500,
-                                'OUTPUT': clip_output_1_5km + layer})
+                                'OUTPUT': clip_output_1500m + layer})
                 processing.run("native:clip",
                                {'INPUT': EIA_Data + "\\" + layer,
                                 'OVERLAY': Buff2000,
-                                'OUTPUT': clip_output_2km + layer})
+                                'OUTPUT': clip_output_2000m + layer})
 
 
-           #-----------------------------------------------------------------------------------------------------------------------------------------------------
+                #Reprojecting data in clipped folders to WGS84
+
+                WGS = "WGS.shp"
+
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_200m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_200m + layer + WGS})
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_500m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_500m + layer + WGS})
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_600m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_600m + layer + WGS})
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_1000m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_1000m + layer + WGS})
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_1500m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_1500m + layer + WGS})
+                processing.run("native:reprojectlayer", {
+                    'INPUT': clip_output_2000m + layer,
+                    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3857'), 'OUTPUT': clip_output_2000m + layer + WGS})
+
+            #-----------------------------------------------------------------------------------------------------------------------------------------------------
 
             # importing symbology into output shapefile folders:
             main_symbol_folder = r'\\uk.wspgroup.com\central data\Discipline Management\Development\01 Service Lines\Smart Consulting\Digital\Data & Analysis\EIA Datastore\QML Symbols'
@@ -419,9 +444,9 @@ class EIA_Map_Production_Automation:
                 shutil.copy(ms, clip_output_200m),
                 shutil.copy(ms, clip_output_500m),
                 shutil.copy(ms, clip_output_600m),
-                shutil.copy(ms, clip_output_1km),
-                shutil.copy(ms, clip_output_1_5km),
-                shutil.copy(ms, clip_output_2km),
+                shutil.copy(ms, clip_output_1000m),
+                shutil.copy(ms, clip_output_1500m),
+                shutil.copy(ms, clip_output_2000m),
 
 
             # ---Map names ----------------------------------------------------------
